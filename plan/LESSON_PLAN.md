@@ -1,3 +1,5 @@
+> **Outdated:** this describes the old `LocalDataService`, which was replaced in the auth/DB lab. See [lab-auth-db.md](lab-auth-db.md).
+
 Here’s the shape we’re aiming for: the UI watches Riverpod providers, providers call the local data service, and the service reads and writes drift. The UI never talks to the database directly.
 
 ProfileTab
