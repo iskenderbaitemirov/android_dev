@@ -1,50 +1,49 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:android_dev/core/db/app_database.dart';
-import '../services/local_data_service.dart';
+
+import '../models/comment_model.dart';
 import '../models/post_model.dart';
+import '../services/posts_repository.dart';
+import 'auth_controller.dart';
 
-extension CachedPostMapper on CachedPost {
-  PostModel toModel() => PostModel(
-        id: id,
-        imageUrl: imageUrl,
-        description: caption,
-        authorId: authorId,
-        authorName: authorName,
-        likeCount: likes,
-        isLiked: isLiked,
-      );
-}
+// ── READ ─────────────────────────────────────────────────────────────────────
 
+/// All posts as seen by the logged-in user.
+/// Watches currentUserIdProvider, so it reloads when another user logs in
+/// (then `isLiked` is calculated for the new user).
 final feedPostsProvider = StreamProvider<List<PostModel>>((ref) {
-  return ref.watch(localDataServiceProvider).watchPosts().map(
-        (posts) => posts.map((post) => post.toModel()).toList(),
-      );
+  final userId = ref.watch(currentUserIdProvider);
+  if (userId == null) return Stream.value([]);
+  return ref.watch(postsRepositoryProvider).watchFeed(userId);
 });
 
-class FeedController {
-  FeedController(this._localData);
+/// Comments of one post: `commentsProvider(postId)`.
+/// autoDispose = stop watching when the comments sheet closes.
+final commentsProvider = StreamProvider.autoDispose.family<List<CommentModel>, int>(
+  (ref, postId) => ref.watch(postsRepositoryProvider).watchComments(postId),
+);
 
-  final LocalDataService _localData;
+// ── WRITE ────────────────────────────────────────────────────────────────────
 
-  Future<void> toggleLike(String id) async {
-    final post = await _localData.getPost(id);
-    if (post != null) await _localData.toggleLike(post);
-  }
+/// Actions. Each one adds "who is doing it" (the logged-in user) and calls
+/// the repository. The UI updates by itself because the streams above re-run.
+class FeedController extends Notifier<void> {
+  @override
+  void build() {}
 
-  Future<void> createPost({required String imageUrl, required String caption}) {
-    final now = DateTime.now().microsecondsSinceEpoch;
-    return _localData.savePost(
-      CachedPostsCompanion.insert(
-        id: 'post-$now',
-        authorId: 'me',
-        authorName: 'alimhan',
-        imageUrl: imageUrl,
-        caption: caption,
-      ),
-    );
-  }
+  PostsRepository get _repo => ref.read(postsRepositoryProvider);
+  int get _userId => ref.read(currentUserIdProvider)!; // only used when logged in
+
+  Future<void> toggleLike(int postId) => _repo.toggleLike(_userId, postId);
+
+  Future<void> createPost(String imageUrl, String caption) =>
+      _repo.createPost(_userId, imageUrl, caption);
+
+  Future<void> addComment(int postId, String body) =>
+      _repo.addComment(postId, _userId, body);
+
+  Future<void> deleteComment(int commentId) =>
+      _repo.deleteComment(commentId, _userId);
 }
 
-final feedControllerProvider = Provider<FeedController>(
-  (ref) => FeedController(ref.watch(localDataServiceProvider)),
-);
+final feedControllerProvider =
+    NotifierProvider<FeedController, void>(FeedController.new);
