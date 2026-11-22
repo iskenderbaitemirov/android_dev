@@ -12,17 +12,23 @@ class ActivityTab extends ConsumerWidget {
       appBar: AppBar(title: const Text('Activity')),
       body: posts.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Could not load activity: $error')),
-        data: (items) {
-          final likedPosts = items.where((post) => post.isLiked).toList();
-          return likedPosts.isEmpty
+        error: (error, _) =>
+            Center(child: Text('Could not load activity: $error')),
+        data: (allPosts) {
+          final items = allPosts.where((post) => post.isLiked).toList();
+          return items.isEmpty
               ? const Center(child: Text('Posts you like will appear here.'))
               : ListView.builder(
-                  itemCount: likedPosts.length,
+                  itemCount: items.length,
                   itemBuilder: (context, index) => ListTile(
-                    leading: Image.network(likedPosts[index].imageUrl, width: 48, height: 48, fit: BoxFit.cover),
-                    title: Text('You liked ${likedPosts[index].authorName}\'s post'),
-                    subtitle: Text(likedPosts[index].description, maxLines: 1),
+                    leading: Image.network(
+                      items[index].imageUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                    ),
+                    title: Text('You liked ${items[index].authorName}\'s post'),
+                    subtitle: Text(items[index].caption, maxLines: 1),
                   ),
                 );
         },

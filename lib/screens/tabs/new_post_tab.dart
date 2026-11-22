@@ -26,15 +26,15 @@ class _NewPostTabState extends ConsumerState<NewPostTab> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
-      await ref.read(feedControllerProvider).createPost(
-            imageUrl: _imageUrl.text.trim(),
-            caption: _caption.text.trim(),
+      await ref.read(feedControllerProvider.notifier).createPost(
+            _imageUrl.text.trim(),
+            _caption.text.trim(),
           );
       _imageUrl.clear();
       _caption.clear();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post saved to your device.')),
+          const SnackBar(content: Text('Post shared!')),
         );
       }
     } finally {

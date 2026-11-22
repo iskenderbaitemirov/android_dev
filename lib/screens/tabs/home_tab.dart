@@ -36,7 +36,7 @@ class HomeTab extends ConsumerWidget {
                         padding: const EdgeInsets.all(4),
                         child: PostWidget(
                           post: items[index],
-                          onLike: () => ref.read(feedControllerProvider).toggleLike(items[index].id),
+                          onLike: () => ref.read(feedControllerProvider.notifier).toggleLike(items[index].id),
                         ),
                       ),
                     ),
