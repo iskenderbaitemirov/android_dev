@@ -1,3 +1,5 @@
+// A console practice script (run with `dart run`), so print() is intended here.
+// ignore_for_file: avoid_print
 
 void notFuture() {
   print("This is a regular function, not a future.");
